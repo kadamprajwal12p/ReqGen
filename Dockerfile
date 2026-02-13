@@ -17,18 +17,19 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy source files
 COPY server ./server
+COPY client ./client
 COPY shared ./shared
+COPY attached_assets ./attached_assets
 COPY tsconfig.json ./
 COPY drizzle.config.ts ./
 COPY vite.config.ts ./
 
-# Build the server
-RUN npm install -g esbuild && \
-    esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+# Build the application
+RUN npm run build && npm prune --production
 
 # Expose port
 EXPOSE 8080
