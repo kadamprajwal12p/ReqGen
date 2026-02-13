@@ -100,7 +100,11 @@ def transcribe_audio():
     except Exception as e:
         print(f"Error during transcription: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Transcription failed', 'details': str(e)}), 500
+        return jsonify({
+            'error': 'Transcription failed', 
+            'details': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @app.route('/api/summarize', methods=['POST'])
 def summarize_text():
@@ -148,7 +152,11 @@ def summarize_text():
     except Exception as e:
         print(f"Error during summarization: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Summarization failed', 'details': str(e)}), 500
+        return jsonify({
+            'error': 'Summarization failed', 
+            'details': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @app.route('/api/process-audio', methods=['POST'])
 def process_audio():
@@ -222,7 +230,11 @@ def process_audio():
         except:
             pass
 
-        return jsonify({'error': 'Audio processing failed', 'details': str(e)}), 500
+        return jsonify({
+            'error': 'Audio processing failed', 
+            'details': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @app.route('/api/process-meeting', methods=['POST'])
 def process_meeting():
@@ -291,7 +303,11 @@ def process_meeting():
     except Exception as e:
         print(f"Error during meeting processing: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Meeting processing failed', 'details': str(e)}), 500
+        return jsonify({
+            'error': 'Meeting processing failed', 
+            'details': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @app.route('/api/models/preload', methods=['POST'])
 def preload_models():
@@ -348,7 +364,11 @@ def generate_document_api():
     except Exception as e:
         print(f"Error during document generation: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Document generation failed', 'details': str(e)}), 500
+        return jsonify({
+            'error': 'Document generation failed', 
+            'details': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 if __name__ == '__main__':
     print("=" * 60)
