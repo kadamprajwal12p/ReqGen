@@ -24,6 +24,7 @@ COPY server ./server
 COPY shared ./shared
 COPY tsconfig.json ./
 COPY drizzle.config.ts ./
+COPY vite.config.ts ./
 
 # Build the server
 RUN npm install -g esbuild && \
