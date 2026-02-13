@@ -18,12 +18,29 @@ export function log(message: string, source = "express") {
 }
 
 export function serveStatic(app: Express) {
-    const distPath = path.resolve(__dirname, "..", "dist", "public");
+    // Simplified path resolution: assume index.js and public/ are siblings in dist/
+    const distPath = path.join(__dirname, "public");
+
+    console.log(`[Static] Resolving dist path: ${distPath}`);
 
     if (!fs.existsSync(distPath)) {
+        console.error(`[Static] Error: Build directory not found at ${distPath}`);
         throw new Error(
             `Could not find the build directory: ${distPath}. Make sure to build the client first.`,
         );
+    } else {
+        try {
+            const contents = fs.readdirSync(distPath);
+            console.log(`[Static] Contents of distPath: ${contents.join(", ")}`);
+            const assetsPath = path.join(distPath, "assets");
+            if (fs.existsSync(assetsPath)) {
+                console.log(`[Static] Assets folder found. Contents: ${fs.readdirSync(assetsPath).join(", ")}`);
+            } else {
+                console.warn(`[Static] WARNING: Assets folder not found in ${distPath}`);
+            }
+        } catch (e) {
+            console.error(`[Static] Error reading dist directory: ${e}`);
+        }
     }
 
     app.use(express.static(distPath));
