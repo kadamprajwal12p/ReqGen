@@ -1,17 +1,13 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { createServer as createViteServer, createLogger, type UserConfig } from "vite";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 import { fileURLToPath } from "url";
 import { log } from "./helpers";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const viteLogger = createLogger();
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -20,12 +16,30 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true as const,
   };
 
-  const resolvedViteConfig = (typeof viteConfig === 'function'
-    ? await viteConfig({ command: 'serve', mode: 'development' })
-    : viteConfig) as UserConfig;
+  // Dynamic import to avoid bundling Vite in production
+  const { createServer: createViteServer, createLogger } = await import("vite");
+  const pluginReact = (await import("@vitejs/plugin-react")).default;
+
+  const viteLogger = createLogger();
 
   const vite = await createViteServer({
-    ...resolvedViteConfig,
+    // Inline config from vite.config.ts to avoid importing it (which causes bundling issues)
+    plugins: [pluginReact()],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "..", "client", "src"),
+        "@shared": path.resolve(__dirname, "..", "shared"),
+        "@assets": path.resolve(__dirname, "..", "attached_assets"),
+      },
+    },
+    root: path.resolve(__dirname, "..", "client"),
+    server: {
+      fs: {
+        strict: true,
+        deny: ["**/.*"],
+      },
+      ...serverOptions,
+    },
     configFile: false,
     customLogger: {
       ...viteLogger,
@@ -34,7 +48,6 @@ export async function setupVite(app: Express, server: Server) {
         process.exit(1);
       },
     },
-    server: serverOptions,
     appType: "custom",
   });
 
