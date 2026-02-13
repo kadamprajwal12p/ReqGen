@@ -592,105 +592,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 300000);
 
-      try {
-        const response = await fetch(`${pythonUrl}${endpoint}`, {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+      const response = await fetch(`${pythonUrl}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
 
-        console.log(`Python backend response status: ${response.status}`);
-        const responseText = await response.text();
-        console.log(`Python backend response (first 500 chars): ${responseText.substring(0, 500)}`);
+      console.log(`Python backend response status: ${response.status}`);
+      const responseText = await response.text();
+      console.log(`Python backend response (first 500 chars): ${responseText.substring(0, 500)}`);
 
-        if (!response.ok) {
-          console.error(`Python backend error on ${endpoint}: ${response.status}`);
-          res.status(response.status).json({
-            error: "Python backend error",
-            status: response.status,
-            details: responseText.substring(0, 1000)
-          });
-          return;
-        }
-
-        // Try to parse as JSON
-        try {
-          const data = JSON.parse(responseText);
-          res.json(data);
-        } catch (parseError) {
-          console.error("Failed to parse Python response as JSON:", responseText.substring(0, 200));
-          res.status(500).json({
-            error: "Invalid JSON from Python backend",
-            rawResponse: responseText.substring(0, 500)
-          });
-        }
-      } catch (error: any) {
-        console.error(`Proxy file error for ${endpoint}:`, error);
-        res.status(500).json({ error: "Failed to communicate with Python backend", details: error.message });
-      }
-    };
-
-    app.post("/api/python/process-audio", upload.single('audio'), (req, res) => {
-      proxyFile(req, res, "/api/process-audio");
-    });
-
-    app.post("/api/python/process-meeting", upload.single('audio'), (req, res) => {
-      proxyFile(req, res, "/api/process-meeting");
-    });
-
-    app.post("/api/python/transcribe", upload.single('audio'), (req, res) => {
-      proxyFile(req, res, "/api/transcribe");
-    });
-
-    app.post("/api/python/test-upload", upload.single('audio'), (req, res) => {
-      proxyFile(req, res, "/api/test-upload");
-    });
-
-    app.post("/api/python/summarize", (req, res) => {
-      proxyJson(req, res, "/api/summarize");
-    });
-
-    app.post("/api/python/generate-document", (req, res) => {
-      proxyJson(req, res, "/api/generate-document");
-    });
-
-    app.get("/api/debug-proxy", async (req, res) => {
-      try {
-        console.log("Debugging proxy connection...");
-        const healthUrl = `${pythonUrl}/api/health`;
-        console.log(`Attempting to fetch: ${healthUrl}`);
-
-        const response = await fetch(healthUrl);
-        const bodyText = await response.text();
-        let bodyJson = { error: "Invalid JSON response" };
-        try {
-          bodyJson = JSON.parse(bodyText);
-        } catch (e) {
-          // Ignore JSON parse error, we have text
-        }
-
-        res.json({
-          configuredUrl: pythonUrl,
-          rawEnvVar: process.env.PYTHON_BACKEND_URL,
-          targetEndpoint: healthUrl,
+      if (!response.ok) {
+        console.error(`Python backend error on ${endpoint}: ${response.status}`);
+        res.status(response.status).json({
+          error: "Python backend error",
           status: response.status,
-          statusText: response.statusText,
-          backendResponse: bodyJson,
-          backendResponseText: bodyText
+          details: responseText.substring(0, 1000)
         });
-      } catch (error: any) {
-        console.error("Debug proxy error:", error);
+        return;
+      }
+
+      // Try to parse as JSON
+      try {
+        const data = JSON.parse(responseText);
+        res.json(data);
+      } catch (parseError) {
+        console.error("Failed to parse Python response as JSON:", responseText.substring(0, 200));
         res.status(500).json({
-          configuredUrl: pythonUrl,
-          rawEnvVar: process.env.PYTHON_BACKEND_URL,
-          error: error.message,
-          details: "Failed to connect to Python backend"
+          error: "Invalid JSON from Python backend",
+          rawResponse: responseText.substring(0, 500)
         });
       }
-    });
+    } catch (error: any) {
+      console.error(`Proxy file error for ${endpoint}:`, error);
+      res.status(500).json({ error: "Failed to communicate with Python backend", details: error.message });
+    }
 
-    const httpServer = createServer(app);
+  };
 
-    return httpServer;
-  }
+  app.post("/api/python/process-audio", upload.single('audio'), (req, res) => {
+    proxyFile(req, res, "/api/process-audio");
+  });
+
+  app.post("/api/python/process-meeting", upload.single('audio'), (req, res) => {
+    proxyFile(req, res, "/api/process-meeting");
+  });
+
+  app.post("/api/python/transcribe", upload.single('audio'), (req, res) => {
+    proxyFile(req, res, "/api/transcribe");
+  });
+
+  app.post("/api/python/test-upload", upload.single('audio'), (req, res) => {
+    proxyFile(req, res, "/api/test-upload");
+  });
+
+  app.post("/api/python/summarize", (req, res) => {
+    proxyJson(req, res, "/api/summarize");
+  });
+
+  app.post("/api/python/generate-document", (req, res) => {
+    proxyJson(req, res, "/api/generate-document");
+  });
+
+  app.get("/api/debug-proxy", async (req, res) => {
+    try {
+      console.log("Debugging proxy connection...");
+      const healthUrl = `${pythonUrl}/api/health`;
+      console.log(`Attempting to fetch: ${healthUrl}`);
+
+      const response = await fetch(healthUrl);
+      const bodyText = await response.text();
+      let bodyJson = { error: "Invalid JSON response" };
+      try {
+        bodyJson = JSON.parse(bodyText);
+      } catch (e) {
+        // Ignore JSON parse error, we have text
+      }
+
+      res.json({
+        configuredUrl: pythonUrl,
+        rawEnvVar: process.env.PYTHON_BACKEND_URL,
+        targetEndpoint: healthUrl,
+        status: response.status,
+        statusText: response.statusText,
+        backendResponse: bodyJson,
+        backendResponseText: bodyText
+      });
+    } catch (error: any) {
+      console.error("Debug proxy error:", error);
+      res.status(500).json({
+        configuredUrl: pythonUrl,
+        rawEnvVar: process.env.PYTHON_BACKEND_URL,
+        error: error.message,
+        details: "Failed to connect to Python backend"
+      });
+    }
+  });
+
+  const httpServer = createServer(app);
+
+  return httpServer;
+}
