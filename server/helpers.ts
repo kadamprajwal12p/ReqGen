@@ -46,7 +46,14 @@ export function serveStatic(app: Express) {
     app.use(express.static(distPath));
 
     // Fallback to index.html for SPA routing
-    app.use("*", (_req, res) => {
-        res.sendFile(path.resolve(distPath, "index.html"));
+    app.use("*", (req, res) => {
+        const url = req.originalUrl;
+
+        // Do not fallback to index.html for assets or API routes
+        if (url.startsWith("/assets/") || url.startsWith("/api/")) {
+            res.status(404).json({ message: "Not Found" });
+        } else {
+            res.sendFile(path.resolve(distPath, "index.html"));
+        }
     });
 }
