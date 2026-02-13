@@ -6,7 +6,7 @@
     "rewrites": [
         {
             "source": "/api/:path*",
-            "destination": "https://frozen-katie-cybaem-4d83cd3d.koyeb.app/api/:path*"
+            "destination": "https://electronic-vivianne-cybaemtech-4617c1fa.koyeb.app/api/:path*"
         }
     ],
     "headers": [
